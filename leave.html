@@ -50,13 +50,13 @@
             <div class="invalid-feedback">Employee code is required.</div>
           </div>
 
+          <!-- Employee name + balances combined -->
           <div class="mb-3">
-            <label class="form-label">Employee Name</label>
-            <input type="text" id="employeeName" class="form-control" required readonly />
-            <div class="invalid-feedback">Employee name is required.</div>
+            <label class="form-label">Employee &amp; Leave Balances</label>
+            <div id="balanceInfo" class="small text-muted">
+              Name: - | Annual: - | Casual: - | Weekend: - | Short (this month): -
+            </div>
           </div>
-
-          <!-- Date of Request REMOVED from UI as requested -->
 
           <div class="mb-3">
             <label class="form-label">Leave Type</label>
@@ -125,11 +125,11 @@
     const statusMsg   = document.getElementById("statusMsg");
     const submitBtn   = document.getElementById("submitBtn");
     const codeInput   = document.getElementById("employeeCode");
-    const nameInput   = document.getElementById("employeeName");
     const leaveTypeEl = document.getElementById("leaveType");
     const leaveFromEl = document.getElementById("leaveFrom");
     const leaveToEl   = document.getElementById("leaveTo");
     const numDaysEl   = document.getElementById("numDays");
+    const balanceInfo = document.getElementById("balanceInfo");
 
     let currentEmployee = null;
 
@@ -138,10 +138,15 @@
       statusMsg.className = "mt-3 small " + (isError ? "text-danger" : "text-muted");
     }
 
+    function clearBalances() {
+      balanceInfo.textContent =
+        "Name: - | Annual: - | Casual: - | Weekend: - | Short (this month): -";
+    }
+
     async function fetchEmployee() {
       const code = codeInput.value.trim();
       currentEmployee = null;
-      nameInput.value = "";
+      clearBalances();
 
       if (!code) {
         setStatus("");
@@ -159,18 +164,21 @@
           return;
         }
         currentEmployee = data.employee;
-        nameInput.value = currentEmployee.name || "";
 
-        // Show balances in status area
-        const info =
-          "Employee: " + currentEmployee.name +
-          " | Service: " + currentEmployee.serviceYear +
-          " | Annual Bal: " + currentEmployee.annualBalance +
-          " | Casual Bal: " + currentEmployee.casualBalance +
-          " | Weekend Bal: " + currentEmployee.weekendBalance +
-          " | Short Bal (this month): " + (currentEmployee.shortBalance || 0);
+        const name       = currentEmployee.name || "-";
+        const annualBal  = currentEmployee.annualBalance || 0;
+        const casualBal  = currentEmployee.casualBalance || 0;
+        const weekendBal = currentEmployee.weekendBalance || 0;
+        const shortBal   = currentEmployee.shortBalance || 0;
 
-        setStatus(info, false);
+        balanceInfo.textContent =
+          "Name: " + name +
+          " | Annual: " + annualBal +
+          " | Casual: " + casualBal +
+          " | Weekend: " + weekendBal +
+          " | Short (this month): " + shortBal;
+
+        setStatus(""); // no extra info at bottom
       } catch (err) {
         console.error(err);
         setStatus("❌ Error looking up employee.", true);
@@ -230,7 +238,7 @@
       // Short Leave rules
       if (leaveType === "Short Leave") {
         if (numDays !== 1) {
-          errors.push("Short Leave can only be applied for 1 day (half day in/out, but 1 date).");
+          errors.push("Short Leave can only be applied for 1 day.");
         }
         if (shortBal <= 0) {
           errors.push("No Short Leave balance remaining for this month.");
@@ -302,13 +310,12 @@
       setStatus("");
       submitBtn.disabled = true;
 
-      // recalc days to be safe
-      calculateDays();
+      calculateDays(); // recalc to be safe
 
       const payload = {
         type: "leave",
         employeeCode: codeInput.value.trim(),
-        employeeName: nameInput.value.trim(),
+        employeeName: currentEmployee ? currentEmployee.name : "",
         leaveType: leaveTypeEl.value,
         leaveFrom: leaveFromEl.value,
         leaveTo: leaveToEl.value,
@@ -335,6 +342,7 @@
         leaveForm.reset();
         currentEmployee = null;
         numDaysEl.value = "";
+        clearBalances();
       } catch (err) {
         console.error(err);
         setStatus("❌ Error submitting. Please contact HR.", true);

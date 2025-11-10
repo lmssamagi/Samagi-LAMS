@@ -26,18 +26,22 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.25);
       overflow: hidden;
     }
-    .logo-circle {
+    /* Logo container (replaces old SE circle) */
+    .logo-container {
       width: 60px;
       height: 60px;
       border-radius: 50%;
-      background: #0d6efd;
-      color: #fff;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 1.2rem;
-      box-shadow: 0 4px 10px rgba(13,110,253,0.6);
+      background: transparent;
+    }
+    .logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
     .portal-btn {
       border-radius: 1rem;
@@ -51,7 +55,7 @@
     .portal-btn span.emoji {
       font-size: 1.4rem;
     }
-    /* ↓ smaller title so it stays in one line on mobile */
+    /* Smaller title for one-line fit */
     .portal-title {
       font-size: 1.35rem;
       font-weight: 700;
@@ -66,10 +70,13 @@
       <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div>
-        
+  
             <h3 class="mb-0 fw-bold portal-title">Samagi Employee Portal</h3>
           </div>
-          <div class="logo-circle">SE</div>
+          <!-- Company Logo -->
+          <div class="logo-container">
+            <img src="logo.png" alt="Company Logo" class="logo-img" />
+          </div>
         </div>
 
         <div class="d-grid gap-3">

@@ -50,7 +50,6 @@
             <div class="invalid-feedback">Employee code is required.</div>
           </div>
 
-          <!-- Employee name + balances combined (two rows) -->
           <div class="mb-3">
             <label class="form-label">Employee &amp; Leave Balances</label>
             <div id="balanceInfo" class="small text-muted">
@@ -70,6 +69,8 @@
               <option value="Weekend Leave">Weekend Leave</option>
               <option value="Maternity Leave">Maternity Leave</option>
               <option value="Paternity Leave">Paternity Leave</option>
+              <option value="Poya Leave">Poya Leave</option>
+              <option value="NoPay Leave">NoPay Leave</option>
             </select>
             <div class="invalid-feedback">Please select a leave type.</div>
           </div>
@@ -89,15 +90,7 @@
 
           <div class="mb-3">
             <label class="form-label">Number of Days</label>
-            <input
-              type="number"
-              id="numDays"
-              class="form-control"
-              min="0.5"
-              step="0.5"
-              required
-              readonly
-            />
+            <input type="number" id="numDays" class="form-control" min="0.5" step="0.5" required readonly />
             <div class="invalid-feedback">Number of days is required.</div>
           </div>
 
@@ -180,7 +173,7 @@
           " | Weekend: " + weekendBal +
           " | Short (this month): " + shortBal;
 
-        setStatus(""); // clear bottom status
+        setStatus("");
       } catch (err) {
         console.error(err);
         setStatus("❌ Error looking up employee.", true);
@@ -226,75 +219,94 @@
         errors.push("Leave From, Leave To and Number of Days are required.");
       }
 
-      if (!currentEmployee) {
-        return errors;
-      }
+      if (!currentEmployee) return errors;
 
-      const serviceYear    = String(currentEmployee.serviceYear || "");
-      const annualBal      = parseFloat(currentEmployee.annualBalance || "0");
-      const casualBal      = parseFloat(currentEmployee.casualBalance || "0");
-      const weekendBal     = parseFloat(currentEmployee.weekendBalance || "0");
-      const shortBal       = parseFloat(currentEmployee.shortBalance || "0");
-      const joinDateStr    = currentEmployee.joinDate;
+      const serviceYear = String(currentEmployee.serviceYear || "");
+      const annualBal   = parseFloat(currentEmployee.annualBalance || "0");
+      const casualBal   = parseFloat(currentEmployee.casualBalance || "0");
+      const weekendBal  = parseFloat(currentEmployee.weekendBalance || "0");
+      const shortBal    = parseFloat(currentEmployee.shortBalance || "0");
+      const joinDateStr = currentEmployee.joinDate;
 
       // Short Leave rules
       if (leaveType === "Short Leave") {
-        if (numDays !== 1) {
-          errors.push("Short Leave can only be applied for 1 day.");
-        }
-        if (shortBal <= 0) {
-          errors.push("No Short Leave balance remaining for this month.");
-        }
+        if (numDays !== 1) errors.push("Short Leave can only be applied for 1 day.");
+        if (shortBal <= 0) errors.push("No Short Leave balance remaining for this month.");
       }
 
-      // Annual Leave rules
+      // Annual Leave
       if (leaveType === "Annual Leave") {
-        if (serviceYear === "Year 1") {
-          errors.push("Annual Leave is not available for Year 1 employees.");
-        }
-        if (numDays > annualBal) {
-          errors.push("Requested days exceed Annual Leave balance.");
-        }
+        if (serviceYear === "Year 1") errors.push("Annual Leave is not available for Year 1 employees.");
+        if (numDays > annualBal) errors.push("Requested days exceed Annual Leave balance.");
       }
 
-      // Casual Leave rules
+      // Casual Leave
       if (leaveType === "Casual Leave") {
-        if (serviceYear !== "Year 1") {
-          errors.push("Casual Leave is only for first-year employees.");
-        }
-        if (numDays > casualBal) {
-          errors.push("Requested days exceed Casual Leave balance.");
-        }
+        if (serviceYear !== "Year 1") errors.push("Casual Leave is only for first-year employees.");
+        if (numDays > casualBal) errors.push("Requested days exceed Casual Leave balance.");
       }
 
-      // Special Sick Leave: only if both Annual & Casual balances are 0
+      // Special Sick Leave
       if (leaveType === "Special Sick Leave") {
-        if (annualBal > 0 || casualBal > 0) {
+        if (annualBal > 0 || casualBal > 0)
           errors.push("Special Sick Leave is only allowed when Annual and Casual balances are 0.");
-        }
       }
 
-      // Weekend Leave: use Weekend balance
+      // Weekend Leave
       if (leaveType === "Weekend Leave") {
-        if (numDays > weekendBal) {
+        if (numDays > weekendBal)
           errors.push("Requested days exceed Weekend Leave balance.");
-        }
       }
 
-      // Paternity Leave: service > 6 months, max 2 days
+      // Paternity Leave
       if (leaveType === "Paternity Leave") {
         if (joinDateStr) {
-          const joinDate  = new Date(joinDateStr);
-          const today     = new Date();
+          const joinDate = new Date(joinDateStr);
+          const today = new Date();
           const months =
             (today.getFullYear() - joinDate.getFullYear()) * 12 +
             (today.getMonth() - joinDate.getMonth());
-          if (months < 6) {
-            errors.push("Paternity Leave is only available after 6 months of service.");
-          }
+          if (months < 6) errors.push("Paternity Leave is only available after 6 months of service.");
         }
-        if (numDays > 2) {
+        if (numDays > 2)
           errors.push("Paternity Leave cannot exceed 2 days.");
+      }
+
+      // NEW: NoPay Leave
+      if (leaveType === "NoPay Leave") {
+        if (numDays <= 0) errors.push("Invalid number of days for NoPay Leave.");
+      }
+
+      // NEW: Poya Leave
+      if (leaveType === "Poya Leave") {
+        if (numDays !== 1)
+          errors.push("Poya Leave can only be for one day.");
+
+        // Check if current month's Poya falls on Sunday
+        const poyaDays = {
+          "2025-01-14": "Duruthu Poya",
+          "2025-02-12": "Navam Poya",
+          "2025-03-13": "Medin Poya",
+          "2025-04-12": "Bak Poya",
+          "2025-05-12": "Vesak Poya",
+          "2025-06-10": "Poson Poya",
+          "2025-07-09": "Esala Poya",
+          "2025-08-08": "Nikini Poya",
+          "2025-09-07": "Binara Poya",
+          "2025-10-06": "Vap Poya",
+          "2025-11-05": "Ill Poya",
+          "2025-12-04": "Unduvap Poya"
+        };
+
+        const leaveMonth = payload.leaveFrom.slice(0,7); // YYYY-MM
+        const found = Object.keys(poyaDays).find(d => d.startsWith(leaveMonth));
+        if (found) {
+          const poyaDate = new Date(found);
+          if (poyaDate.getDay() === 0) {
+            errors.push("Poya Leave not allowed this month (falls on Sunday).");
+          }
+        } else {
+          errors.push("No Poya Day found for this month.");
         }
       }
 
@@ -312,7 +324,7 @@
       setStatus("");
       submitBtn.disabled = true;
 
-      calculateDays(); // recalc to be safe
+      calculateDays();
 
       const payload = {
         type: "leave",

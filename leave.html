@@ -4,33 +4,17 @@
   <meta charset="UTF-8" />
   <title>Leave Request | Samagi Employee Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Bootstrap CSS -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    body {
-      background: #f5f5f5;
-      margin: 0;
-    }
-    .form-card {
-      max-width: 600px;
-      margin: 1.5rem auto;
-      border-radius: 1.25rem;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    }
+    body { background: #f5f5f5; margin: 0; }
+    .form-card { max-width: 600px; margin: 1.5rem auto; border-radius: 1.25rem; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-light bg-primary bg-gradient mb-3">
     <div class="container-fluid">
-      <button class="btn btn-link text-white text-decoration-none" onclick="location.href='index.html'">
-        ← Home
-      </button>
-      <span class="navbar-brand mb-0 h6 text-white">
-        Leave Request
-      </span>
+      <button class="btn btn-link text-white text-decoration-none" onclick="location.href='index.html'">← Home</button>
+      <span class="navbar-brand mb-0 h6 text-white">Leave Request</span>
       <span></span>
     </div>
   </nav>
@@ -39,9 +23,7 @@
     <div class="card form-card">
       <div class="card-body p-4">
         <h5 class="card-title mb-3">Leave Request Form</h5>
-        <p class="text-muted small mb-3">
-          Fill in the details below and submit your leave request for approval.
-        </p>
+        <p class="text-muted small mb-3">Fill in the details below and submit your leave request for approval.</p>
 
         <form id="leaveForm" class="needs-validation" novalidate>
           <div class="mb-3">
@@ -79,19 +61,16 @@
             <div class="col-12 col-md-6 mb-3">
               <label class="form-label">Leave From</label>
               <input type="date" id="leaveFrom" class="form-control" required />
-              <div class="invalid-feedback">Please select start date.</div>
             </div>
             <div class="col-12 col-md-6 mb-3">
               <label class="form-label">Leave To</label>
               <input type="date" id="leaveTo" class="form-control" required />
-              <div class="invalid-feedback">Please select end date.</div>
             </div>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Number of Days</label>
-            <input type="number" id="numDays" class="form-control" min="0.5" step="0.5" required readonly />
-            <div class="invalid-feedback">Number of days is required.</div>
+            <input type="number" id="numDays" class="form-control" readonly />
           </div>
 
           <div class="mb-3">
@@ -100,11 +79,8 @@
           </div>
 
           <div class="d-grid">
-            <button type="submit" id="submitBtn" class="btn btn-primary">
-              Submit Leave Request
-            </button>
+            <button type="submit" id="submitBtn" class="btn btn-primary">Submit Leave Request</button>
           </div>
-
           <div id="statusMsg" class="mt-3 small"></div>
         </form>
       </div>
@@ -112,19 +88,16 @@
   </div>
 
   <script>
-    const SCRIPT_URL =
-      "https://script.google.com/macros/s/AKfycbwckp7p4NPM4U15oNzVOsl2u4sSM6oLiDSsFHonjldMv4nBnPBggvQD4uQXZiX4-Xl73Q/exec";
-
-    const leaveForm   = document.getElementById("leaveForm");
-    const statusMsg   = document.getElementById("statusMsg");
-    const submitBtn   = document.getElementById("submitBtn");
-    const codeInput   = document.getElementById("employeeCode");
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwckp7p4NPM4U15oNzVOsl2u4sSM6oLiDSsFHonjldMv4nBnPBggvQD4uQXZiX4-Xl73Q/exec";
+    const leaveForm = document.getElementById("leaveForm");
+    const statusMsg = document.getElementById("statusMsg");
+    const submitBtn = document.getElementById("submitBtn");
+    const codeInput = document.getElementById("employeeCode");
     const leaveTypeEl = document.getElementById("leaveType");
     const leaveFromEl = document.getElementById("leaveFrom");
-    const leaveToEl   = document.getElementById("leaveTo");
-    const numDaysEl   = document.getElementById("numDays");
+    const leaveToEl = document.getElementById("leaveTo");
+    const numDaysEl = document.getElementById("numDays");
     const balanceInfo = document.getElementById("balanceInfo");
-
     let currentEmployee = null;
 
     function setStatus(msg, isError = false) {
@@ -133,71 +106,38 @@
     }
 
     function clearBalances() {
-      balanceInfo.innerHTML =
-        "<strong>-</strong><br>" +
-        "Annual: - | Casual: - | Weekend: - | Short (this month): -";
+      balanceInfo.innerHTML = "<strong>-</strong><br>Annual: - | Casual: - | Weekend: - | Short (this month): -";
     }
 
     async function fetchEmployee() {
       const code = codeInput.value.trim();
       currentEmployee = null;
       clearBalances();
-
-      if (!code) {
-        setStatus("");
-        return;
-      }
-
+      if (!code) return;
       try {
         setStatus("Looking up employee...");
-        const res = await fetch(
-          SCRIPT_URL + "?action=getEmployee&code=" + encodeURIComponent(code)
-        );
+        const res = await fetch(SCRIPT_URL + "?action=getEmployee&code=" + encodeURIComponent(code));
         const data = await res.json();
-        if (!data.success) {
-          setStatus("❌ " + (data.error || "Employee not found"), true);
-          return;
-        }
+        if (!data.success) return setStatus("❌ " + (data.error || "Employee not found"), true);
         currentEmployee = data.employee;
-
-        const name       = currentEmployee.name || "-";
-        const annualBal  = currentEmployee.annualBalance || 0;
-        const casualBal  = currentEmployee.casualBalance || 0;
-        const weekendBal = currentEmployee.weekendBalance || 0;
-        const shortBal   = currentEmployee.shortBalance || 0;
-
+        const n = currentEmployee.name;
         balanceInfo.innerHTML =
-          "<strong>" + name + "</strong><br>" +
-          "Annual: " + annualBal +
-          " | Casual: " + casualBal +
-          " | Weekend: " + weekendBal +
-          " | Short (this month): " + shortBal;
-
+          "<strong>" + n + "</strong><br>" +
+          "Annual: " + currentEmployee.annualBalance +
+          " | Casual: " + currentEmployee.casualBalance +
+          " | Weekend: " + currentEmployee.weekendBalance +
+          " | Short (this month): " + currentEmployee.shortBalance;
         setStatus("");
-      } catch (err) {
-        console.error(err);
-        setStatus("❌ Error looking up employee.", true);
-      }
+      } catch (err) { setStatus("❌ Error loading employee", true); }
     }
 
     codeInput.addEventListener("blur", fetchEmployee);
 
     function calculateDays() {
-      const from = leaveFromEl.value;
-      const to   = leaveToEl.value;
-      if (!from || !to) {
-        numDaysEl.value = "";
-        return;
-      }
-      const start = new Date(from);
-      const end   = new Date(to);
-      const diffMs = end - start;
-      const days = diffMs / (1000 * 60 * 60 * 24) + 1;
-      if (days > 0) {
-        numDaysEl.value = days.toFixed(1).replace(/\.0$/, "");
-      } else {
-        numDaysEl.value = "";
-      }
+      const from = leaveFromEl.value, to = leaveToEl.value;
+      if (!from || !to) return numDaysEl.value = "";
+      const d = (new Date(to) - new Date(from)) / (1000*60*60*24) + 1;
+      numDaysEl.value = d > 0 ? d : "";
     }
 
     leaveFromEl.addEventListener("change", calculateDays);
@@ -205,125 +145,32 @@
 
     function validateBusinessRules(payload) {
       const errors = [];
-      if (!currentEmployee) {
-        errors.push("Invalid Employee Code or employee not loaded.");
-      }
-
+      if (!currentEmployee) return ["Invalid Employee Code"];
       const leaveType = payload.leaveType;
-      const numDays   = parseFloat(payload.numDays || "0");
+      const numDays = parseFloat(payload.numDays || "0");
+      const annualBal = parseFloat(currentEmployee.annualBalance || "0");
+      const casualBal = parseFloat(currentEmployee.casualBalance || "0");
+      const shortBal = parseFloat(currentEmployee.shortBalance || "0");
 
-      if (!leaveType) {
-        errors.push("Leave Type is required.");
-      }
-      if (!payload.leaveFrom || !payload.leaveTo || !payload.numDays) {
-        errors.push("Leave From, Leave To and Number of Days are required.");
-      }
+      if (leaveType === "Short Leave" && numDays !== 1)
+        errors.push("Short Leave can only be applied for 1 day.");
 
-      if (!currentEmployee) return errors;
-
-      const serviceYear = String(currentEmployee.serviceYear || "");
-      const annualBal   = parseFloat(currentEmployee.annualBalance || "0");
-      const casualBal   = parseFloat(currentEmployee.casualBalance || "0");
-      const weekendBal  = parseFloat(currentEmployee.weekendBalance || "0");
-      const shortBal    = parseFloat(currentEmployee.shortBalance || "0");
-      const joinDateStr = currentEmployee.joinDate;
-
-      // Short Leave rules
-      if (leaveType === "Short Leave") {
-        if (numDays !== 1) errors.push("Short Leave can only be applied for 1 day.");
-        if (shortBal <= 0) errors.push("No Short Leave balance remaining for this month.");
-      }
-
-      // Annual Leave
-      if (leaveType === "Annual Leave") {
-        if (serviceYear === "Year 1") errors.push("Annual Leave is not available for Year 1 employees.");
-        if (numDays > annualBal) errors.push("Requested days exceed Annual Leave balance.");
-      }
-
-      // Casual Leave
-      if (leaveType === "Casual Leave") {
-        if (serviceYear !== "Year 1") errors.push("Casual Leave is only for first-year employees.");
-        if (numDays > casualBal) errors.push("Requested days exceed Casual Leave balance.");
-      }
-
-      // Special Sick Leave
-      if (leaveType === "Special Sick Leave") {
-        if (annualBal > 0 || casualBal > 0)
-          errors.push("Special Sick Leave is only allowed when Annual and Casual balances are 0.");
-      }
-
-      // Weekend Leave
-      if (leaveType === "Weekend Leave") {
-        if (numDays > weekendBal)
-          errors.push("Requested days exceed Weekend Leave balance.");
-      }
-
-      // Paternity Leave
-      if (leaveType === "Paternity Leave") {
-        if (joinDateStr) {
-          const joinDate = new Date(joinDateStr);
-          const today = new Date();
-          const months =
-            (today.getFullYear() - joinDate.getFullYear()) * 12 +
-            (today.getMonth() - joinDate.getMonth());
-          if (months < 6) errors.push("Paternity Leave is only available after 6 months of service.");
-        }
-        if (numDays > 2)
-          errors.push("Paternity Leave cannot exceed 2 days.");
-      }
-
-      // NEW: NoPay Leave
+      // NEW RULE: NoPay Leave
       if (leaveType === "NoPay Leave") {
         if (numDays <= 0) errors.push("Invalid number of days for NoPay Leave.");
-      }
-
-      // NEW: Poya Leave
-      if (leaveType === "Poya Leave") {
-        if (numDays !== 1)
-          errors.push("Poya Leave can only be for one day.");
-
-        // Check if current month's Poya falls on Sunday
-        const poyaDays = {
-          "2025-01-14": "Duruthu Poya",
-          "2025-02-12": "Navam Poya",
-          "2025-03-13": "Medin Poya",
-          "2025-04-12": "Bak Poya",
-          "2025-05-12": "Vesak Poya",
-          "2025-06-10": "Poson Poya",
-          "2025-07-09": "Esala Poya",
-          "2025-08-08": "Nikini Poya",
-          "2025-09-07": "Binara Poya",
-          "2025-10-06": "Vap Poya",
-          "2025-11-05": "Ill Poya",
-          "2025-12-04": "Unduvap Poya"
-        };
-
-        const leaveMonth = payload.leaveFrom.slice(0,7); // YYYY-MM
-        const found = Object.keys(poyaDays).find(d => d.startsWith(leaveMonth));
-        if (found) {
-          const poyaDate = new Date(found);
-          if (poyaDate.getDay() === 0) {
-            errors.push("Poya Leave not allowed this month (falls on Sunday).");
-          }
-        } else {
-          errors.push("No Poya Day found for this month.");
-        }
+        if (annualBal > 0 || casualBal > 0)
+          errors.push("NoPay Leave can only be applied when both Annual and Casual leave balances are 0.");
       }
 
       return errors;
     }
 
-    leaveForm.addEventListener("submit", async function (e) {
+    leaveForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!leaveForm.checkValidity()) {
-        leaveForm.classList.add("was-validated");
-        return;
-      }
-
+      if (!leaveForm.checkValidity()) { leaveForm.classList.add("was-validated"); return; }
       leaveForm.classList.remove("was-validated");
       setStatus("");
       submitBtn.disabled = true;
-
       calculateDays();
 
       const payload = {
@@ -351,14 +198,12 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-
-        setStatus("✅ Leave request submitted successfully.", false);
+        setStatus("✅ Leave request submitted successfully.");
         leaveForm.reset();
-        currentEmployee = null;
-        numDaysEl.value = "";
         clearBalances();
+        numDaysEl.value = "";
+        currentEmployee = null;
       } catch (err) {
-        console.error(err);
         setStatus("❌ Error submitting. Please contact HR.", true);
       } finally {
         submitBtn.disabled = false;

@@ -50,11 +50,12 @@
             <div class="invalid-feedback">Employee code is required.</div>
           </div>
 
-          <!-- Employee name + balances combined -->
+          <!-- Employee name + balances combined (two rows) -->
           <div class="mb-3">
             <label class="form-label">Employee &amp; Leave Balances</label>
             <div id="balanceInfo" class="small text-muted">
-              Name: - | Annual: - | Casual: - | Weekend: - | Short (this month): -
+              <strong>-</strong><br>
+              Annual: - | Casual: - | Weekend: - | Short (this month): -
             </div>
           </div>
 
@@ -139,8 +140,9 @@
     }
 
     function clearBalances() {
-      balanceInfo.textContent =
-        "Name: - | Annual: - | Casual: - | Weekend: - | Short (this month): -";
+      balanceInfo.innerHTML =
+        "<strong>-</strong><br>" +
+        "Annual: - | Casual: - | Weekend: - | Short (this month): -";
     }
 
     async function fetchEmployee() {
@@ -171,14 +173,14 @@
         const weekendBal = currentEmployee.weekendBalance || 0;
         const shortBal   = currentEmployee.shortBalance || 0;
 
-        balanceInfo.textContent =
-          "Name: " + name +
-          " | Annual: " + annualBal +
+        balanceInfo.innerHTML =
+          "<strong>" + name + "</strong><br>" +
+          "Annual: " + annualBal +
           " | Casual: " + casualBal +
           " | Weekend: " + weekendBal +
           " | Short (this month): " + shortBal;
 
-        setStatus(""); // no extra info at bottom
+        setStatus(""); // clear bottom status
       } catch (err) {
         console.error(err);
         setStatus("❌ Error looking up employee.", true);
